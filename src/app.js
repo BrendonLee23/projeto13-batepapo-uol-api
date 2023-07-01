@@ -36,3 +36,63 @@ function filterUsersMessages (message, participant) {
     }
 
 }
+
+app.post('/participants', async (req, res) => {
+
+    const participant = req.body;
+    const isValidParticipant = participantSchema.validate(participant);
+    
+    if (isValidParticipant.error) {
+
+        return res.sendStatus(422);
+        
+    }
+
+    try {
+
+        const mongoClient = new MongoClient(process.env.MONGO_URI);
+        await mongoClient.connect();
+
+        const participantsCollection = mongoClient.db('bate-papo-uol-chat').collection('participants');
+        const messagesCollection = mongoClient.db('bate-papo-uol-chat').collection('messages');
+
+        
+        const participantNameInUse = await participantsCollection.findOne({ name: participant.name });
+
+
+        if (participantNameInUse) {
+
+            return res.sendStatus(409);
+        
+        }
+
+        await participantsCollection.insertOne({
+
+            ...participant,
+            lastStatus: Date.now()
+
+        });
+
+        await messagesCollection.insertOne({
+
+            from: participant.name,
+            to: 'Todos',
+            text: 'Entra na sala...',
+            type: 'status',
+            time: dayjs().format('HH:mm:ss')
+
+        }); 
+
+        await mongoClient.close();
+        res.sendStatus(201);
+        console.log('Participants POST => OK!');
+
+    } catch (e) {
+
+        console.log('Participants POST => Erro!!!!!!!!');
+        res.sendStatus(500);
+
+    }
+
+});
+
