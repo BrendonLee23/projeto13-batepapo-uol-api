@@ -24,3 +24,15 @@ const messageSchema = Joi.object({
     type: Joi.string().valid('message', 'private_message')
 
 });
+
+function filterUsersMessages (message, participant) {
+
+    const publicMessage = type === 'message';
+
+    if ((message.to === 'Todos') || (message.from === participant) || (message.to === participant) || (publicMessage)) {
+        return true;
+    } else {
+        return false;
+    }
+
+}
