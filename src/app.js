@@ -96,3 +96,8 @@ app.post('/participants', async (req, res) => {
 
 });
 
+app.listen(5000, () => {
+
+    console.log('RODANDO');
+
+});
