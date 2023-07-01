@@ -96,6 +96,29 @@ app.post('/participants', async (req, res) => {
 
 });
 
+app.get('/participants', async (req, res) => {
+
+    try {
+
+        const mongoClient = new MongoClient(process.env.MONGO_URI);
+        await mongoClient.connect();
+
+        const participantsCollection = mongoClient.db('bate-papo-uol-chat').collection('participants');
+        const participants = await participantsCollection.find({}).toArray();
+
+        await mongoClient.close();
+        console.log('Participants GET => OK!');
+        res.send(participants);
+
+    } catch (e) {
+
+        console.log('Participants GET => ERROR!!!!!!!!');
+        res.sendStatus(500, e);
+
+    }
+
+});
+
 app.listen(5000, () => {
 
     console.log('RODANDO');
