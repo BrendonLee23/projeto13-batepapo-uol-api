@@ -166,6 +166,46 @@ app.post('/messages', async (req, res) => {
 
 });
 
+
+app.get('/messages', async (req, res) => {
+
+    const messagesCap = (req.query.limit);
+    const participant = req.headers.user;
+
+    try {
+
+        const mongoClient = new MongoClient(process.env.MONGO_URI);
+        await mongoClient.connect();
+        
+        const messagesCollection = mongoClient.db('bate-papo-uol-chat').collection('messages');
+        const messages = await messagesCollection.find({}).toArray(); 
+
+        const usersMessages = messages.filter((message) => {
+
+            filterUsersMessages(message, participant);
+
+        });
+
+        await mongoClient.close();
+
+        if (messagesCap !== null) {
+            
+            return res.send(usersMessages);
+
+        }
+
+        res.send(usersMessages);
+    
+    } catch (e) {
+
+        console.log(e);
+        res.sendStatus(500);
+
+    }
+
+});
+
+
 app.listen(5000, () => {
 
     console.log('RODANDO');
