@@ -245,6 +245,62 @@ app.post('/status', async (req, res) => {
 
 });
 
+
+setInterval(async () => {
+    
+    try {
+
+        const mongoClient = new MongoClient(processs.env.MONGO_URI);
+        await mongoClient.connect();
+
+        const participantsCollection = mongoClient.db('bate-papo-uol-chat').collection('participants');
+        const messagesCollection = mongoClient.db('bate-papo-uol-chat').collection('messages');
+        const participants = await participantsCollection.find().toArray(); 
+
+        const connectionTimeOut = Date.now() - 10000; 
+        
+        const AFKusers = participants.filter( async (participant) => {
+
+            if ((AFKusers.length === 0) && (lastStatus < connectionTimeOut)) {
+
+                await mongoClient.close(); 
+                console.log('No AFK users!');
+                return;
+
+            }
+            
+        }); 
+
+        await messagesCollection.insertMany(AFKmessage);
+        await participantsCollection.deleteMany({ lastStatus: { $lte: connectionTimeOut } });
+
+        const AFKmessage = AFKusers.map(() => {
+
+            return {
+                
+                from: user.name,
+                to: 'Todos',
+                text: 'sai da sala...',
+                type: 'status',
+                time: dayjs().format('HH:mm:ss')
+
+            }
+
+        });
+
+        await mongoClient.close();
+        console.log('AFK => OK!');
+
+    } catch (e) {
+
+        console.log('AFK => USUARIO ESTÁ OFFLINE');
+        return;
+
+    } 
+
+}, 15000);
+
+
 app.listen(5000, () => {
 
     console.log('RODANDO');
