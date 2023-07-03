@@ -119,6 +119,53 @@ app.get('/participants', async (req, res) => {
 
 });
 
+app.post('/messages', async (req, res) => {
+
+    const message = req.body;
+    const from = req.headers;
+
+    const isValidMessage = messageSchema.validate(message);
+
+    if (isValidMessage.error) {
+
+        return res.sendStatus(422);
+
+    }
+
+    try {
+
+        const mongoClient = new MongoClient(process.env.MONGO_URI);
+        await mongoClient.connect();
+        const participantsCollection = mongoClient.db('bate-papo-uol-chat').collection('participants');
+        const messagesCollection = mongoClient.db('bate-papo-uol-chat').collection('messages');
+
+        const participantNameInUse = await participantsCollection.findOne({ name: from });
+
+        if (!participantNameInUse) {
+
+            return res.sendStatus(422);
+
+        }
+
+        await messagesCollection.insertOne({
+
+            ...message,
+            from,
+            time: dayjs().format('HH:mm:ss')
+
+        });
+
+        await mongoClient.close();
+        res.sendStatus(201);
+
+    } catch (e) {
+
+        res.sendStatus(500);
+        
+    }
+
+});
+
 app.listen(5000, () => {
 
     console.log('RODANDO');
