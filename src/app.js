@@ -166,7 +166,6 @@ app.post('/messages', async (req, res) => {
 
 });
 
-
 app.get('/messages', async (req, res) => {
 
     const messagesCap = (req.query.limit);
@@ -205,6 +204,46 @@ app.get('/messages', async (req, res) => {
 
 });
 
+app.post('/status', async (req, res) => {
+
+    const participant = req.headers.user;
+
+    try {
+
+        const mongoClient = new MongoClient(process.env.MONGO_URI);
+        await mongoClient.connect();
+
+        const participantsCollection = mongoClient.db('bate-papo-uol-chat').collection('participants');
+        const participantNameInUse = await participantsCollection.findOne({ name: participant });
+
+        if (!participantNameInUse) {
+
+            return res.sendStatus(404);
+
+        }
+        
+        await participantsCollection.updateOne({
+            
+            _id: participantNameInUse._id
+        }, {
+            $set: {
+                lastStatus: Date.now()
+            }
+
+        });
+
+        console.log('Status POST => OK!')
+        await mongoClient.close();
+        res.sendStatus(200);
+
+    } catch (e) {
+
+        console.log('Status POST => ERROR!!!!!!!');
+        res.sendStatus(500);
+
+    }
+
+});
 
 app.listen(5000, () => {
 
